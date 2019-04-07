@@ -20,23 +20,25 @@ int main()
 
     if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        std::cerr << "Socket error";
+        perror("socket() error");
         exit(1);
     }
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servaddr.sin_port = htons(54002);
+    servaddr.sin_port = htons(54001);
+    int opt = 1;
+    setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof (opt));
 
     if (bind(listenfd, (sockaddr*)&servaddr, sizeof(servaddr)) == -1)
     {
-        std::cerr << "Bind error: " << strerror(errno) << " " << listenfd;
+        perror("bind() error");
         exit(1);
     }
 
     if (listen(listenfd, SOMAXCONN) == -1)
     {
-        std::cerr << "Listen fail";
+        perror("listen() error");
         exit(1);
     }
 
@@ -46,7 +48,7 @@ int main()
     {
         if ((connfd = accept(listenfd, nullptr, nullptr)) == -1)
         {
-            std::cerr << "Connect error";
+            perror("accept() error");
             exit(1);
         }
         else
@@ -56,7 +58,7 @@ int main()
 
         if (pthread_create(&thread, nullptr, &connection_handler, (void*)&connfd) < 0)
         {
-            std::cerr << "Thread creation error";
+            perror("pthread_create() error");
             exit(1);
         }
     }
@@ -71,7 +73,7 @@ size_t writen(int sockfd, const char *buf, size_t count)
     if (buf == nullptr)
     {
         errno = EFAULT;
-        std::cerr << "writen() error";
+        perror("writen() error");
         exit(1);
     }
 
@@ -81,7 +83,7 @@ size_t writen(int sockfd, const char *buf, size_t count)
     {
         if ((rc = write(sockfd, p, n)) == -1)
         {
-            std::cerr << "write() error";
+            perror("write() error");
             exit(1);
         }
         n -= rc;
@@ -93,10 +95,9 @@ size_t writen(int sockfd, const char *buf, size_t count)
 
 static void *connection_handler(void *arg)
 {
-    std::cout << "Got connection";
     if(pthread_detach(pthread_self()) < 0)
     {
-        std::cerr << "Thread detach error";
+        perror("pthread_detach error");
         exit(1);
     }
 
@@ -123,7 +124,7 @@ static void *connection_handler(void *arg)
 
     if (close(sockfd) == -1)
     {
-        std::cerr << "Close error";
+        perror("close() error");
         exit(1);
     }
     else {
