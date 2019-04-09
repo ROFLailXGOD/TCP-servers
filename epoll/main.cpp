@@ -11,8 +11,6 @@
 
 std::list<int> clients;
 
-void connection_handler(int sockfd);
-
 int main()
 {
     struct epoll_event ev = {
