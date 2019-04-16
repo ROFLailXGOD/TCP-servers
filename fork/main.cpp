@@ -19,7 +19,7 @@ int main()
 {
     struct epoll_event ev;
 
-    char buff[1024];
+    char buff[4096];
 
     pid_t childpid;
 
@@ -75,7 +75,7 @@ int main()
                     continue;
 
 
-                //incoming message
+                //read incoming message
                 int bytes = read(ev.data.fd, buff, sizeof(buff));
 
                 if (bytes == -1)
@@ -141,7 +141,7 @@ int main()
 
         pipes.insert(std::pair<int,int>(pr_pipefd[0], cr_pipefd[1]));
 
-        //add read end of a pipe to epoll
+        //add read end of the pipe to epoll
         ev.events = EPOLLIN | EPOLLET;
         ev.data.fd = pr_pipefd[0];
         if(epoll_ctl(pollfd, EPOLL_CTL_ADD, pr_pipefd[0], &ev))
@@ -197,25 +197,17 @@ int main()
             int bytes;
             for (;;)
             {
-                if ((bytes = read(connfd, buff, sizeof(buff))) <= 0)
+                if ((bytes = splice(connfd, nullptr, pr_pipefd[1], nullptr, 4096, SPLICE_F_MOVE | SPLICE_F_NONBLOCK)) <= 0)
                 {
                     if (errno != EAGAIN || bytes == 0)
                         break;
                 }
-                else
-                {
-                    writen(pr_pipefd[1], buff, bytes);
-                }
 
-                if ((bytes = read(cr_pipefd[0], buff, sizeof(buff))) > 0)
-                {
-                    writen(connfd, buff, bytes);
-                }
-                else if (bytes == -1)
+                if ((bytes = splice(cr_pipefd[0], nullptr, connfd, nullptr, 4096, SPLICE_F_MOVE | SPLICE_F_NONBLOCK)) <= 0)
                 {
                     if (errno != EAGAIN)
                     {
-                        perror("read() error");
+                        perror("splice() error");
                         exit(1);
                     }
                 }
