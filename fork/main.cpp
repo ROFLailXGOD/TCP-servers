@@ -17,9 +17,7 @@ int setnonblocking(int fd);
 
 int main()
 {
-    struct epoll_event ev = {
-        .events = EPOLLIN,
-    };
+    struct epoll_event ev;
 
     char buff[1024];
 
@@ -144,6 +142,7 @@ int main()
         pipes.insert(std::pair<int,int>(pr_pipefd[0], cr_pipefd[1]));
 
         //add read end of a pipe to epoll
+        ev.events = EPOLLIN | EPOLLET;
         ev.data.fd = pr_pipefd[0];
         if(epoll_ctl(pollfd, EPOLL_CTL_ADD, pr_pipefd[0], &ev))
         {
