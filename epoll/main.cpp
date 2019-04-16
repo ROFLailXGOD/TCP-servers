@@ -13,9 +13,8 @@ std::list<int> clients;
 
 int main()
 {
-    struct epoll_event ev = {
-        .events = EPOLLIN,
-    };
+    struct epoll_event ev;
+    ev.events = EPOLLIN;
 
     char buff[1024];
 
@@ -31,7 +30,7 @@ int main()
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servaddr.sin_port = htons(54002);
+    servaddr.sin_port = htons(54010);
     int opt = 1;
     setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof (opt));
 
